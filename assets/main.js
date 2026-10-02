@@ -15,8 +15,9 @@ $("ctaBtn").href = SITE.contactLink;
 $("tl").innerHTML = JOURNEY.map(j => `<div class="tl-i"><time>${esc(j.date)}</time><h4>${esc(j.title)}</h4><p>${esc(j.text)}</p></div>`).join("");
 
 /* 数字のカウントアップ */
+const autoN = s => s.auto === "items" ? ITEMS.length : s.auto === "types" ? new Set(ITEMS.map(i => i.type)).size : s.n;
 $("stats").innerHTML = SITE.stats.map(s =>
-  `<div class="stat"><b><span data-n="${s.n}">0</span>${esc(s.suffix)}</b><span>${esc(s.label)}</span></div>`).join("");
+  `<div class="stat"><b><span data-n="${autoN(s)}">0</span>${esc(s.suffix)}</b><span>${esc(s.label)}</span></div>`).join("");
 document.querySelectorAll("[data-n]").forEach(el => {
   const end = +el.dataset.n, t0 = performance.now(), dur = 1400;
   const step = t => { const p = Math.min((t - t0) / dur, 1); el.textContent = Math.round(end * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); };
