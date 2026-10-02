@@ -12,18 +12,18 @@
 </head>
 <body>
 <nav><div class="wrap">
-  <a href="./" class="logo">Study<span>Notes</span></a>
-  <div class="menu"><a href="diary/" class="hide">日記</a><a href="./#works" class="hide">成果物</a><button class="theme" id="theme" aria-label="テーマ切り替え">◐</button></div>
+  <a href="index.html" class="logo">Study<span>Notes</span></a>
+  <div class="menu"><a href="diary/index.html" class="hide">日記</a><a href="index.html#works" class="hide">成果物</a><button class="theme" id="theme" aria-label="テーマ切り替え">◐</button></div>
 </div></nav>
 
 <main class="page">
   <div class="eyebrow">Write</div>
   <h1>投稿する</h1>
-  <p class="sec-lead">日記やノートをブラウザで書いて、そのまま公開できます。スマホからもOKです。</p>
+  <p class="sec-lead">日記やノートをブラウザで書いて、そのまま公開できます。本人確認(GitHubトークン)が済むと、編集画面が表示されます。</p>
 
   <!-- 初期設定 -->
   <details class="panel" id="settings">
-    <summary>⚙ 初期設定(最初の1回だけ)</summary>
+    <summary>🔐 本人確認・初期設定</summary>
     <div class="help">
       GitHubに保存するための「合言葉(トークン)」を入れます。トークンはこの端末のブラウザにだけ保存され、サイトには公開されません。
       <ol>
@@ -45,14 +45,15 @@
       <button class="btn p sm" id="cfgSave">保存して接続テスト</button>
       <button class="btn sm" id="cfgClear">設定を消す</button>
     </div>
+    <div class="status" id="cfgStatus"></div>
   </details>
 
-  <div class="tabs" id="tabs">
+  <div class="tabs gated" id="tabs">
     <button class="chip on" data-kind="diary">日記</button>
     <button class="chip" data-kind="note">ノート</button>
   </div>
 
-  <div class="panel">
+  <div class="panel gated">
     <div id="editingBar" class="help" style="display:none;margin-top:0"></div>
     <label class="field"><span>タイトル</span><input id="title" placeholder="タイトル"></label>
     <div id="noteFields">
@@ -83,7 +84,7 @@
     <div class="status" id="status"></div>
   </div>
 
-  <div class="panel">
+  <div class="panel gated">
     <b id="listTitle">これまでの投稿</b>
     <div id="postList" style="margin-top:8px"><span class="help">設定すると表示されます。</span></div>
   </div>
@@ -101,6 +102,8 @@
   let draftId = newId();   // 新規投稿のID
   let pending = {};        // { "img/xxx.jpg": { b64, url } } 未アップロードの画像
   let imgCount = 0;
+  let authed = false;
+  function setAuthed(v) { authed = v; document.body.classList.toggle("authed", v); if (v) refreshList(); else $("settings").open = true; }
 
   /* ---------- 便利関数 ---------- */
   function newId() {
@@ -110,6 +113,7 @@
   const enc = str => { const b = new TextEncoder().encode(str); let s = ""; b.forEach(c => s += String.fromCharCode(c)); return btoa(s); };
   const dec = b64 => { const s = atob(b64.replace(/\n/g, "")); return new TextDecoder().decode(Uint8Array.from(s, c => c.charCodeAt(0))); };
   function status(msg, type) { const el = $("status"); el.textContent = msg; el.className = "status show " + (type || "info"); }
+  function cstatus(msg, type) { const el = $("cfgStatus"); el.textContent = msg; el.className = "status show " + (type || "info"); }
   const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 
@@ -175,7 +179,7 @@
     $("noteFields").style.display = k === "note" ? "" : "none";
     $("title").placeholder = k === "diary" ? "例:今日の勉強メモ" : "ノートのタイトル";
     $("listTitle").textContent = `これまでの${KINDS[k].label}`;
-    resetForm(); refreshList();
+    resetForm(); if (authed) refreshList();
   }
   document.querySelectorAll("#tabs .chip").forEach(c => c.onclick = () => setKind(c.dataset.kind));
 
@@ -329,17 +333,22 @@
   $("cfgSave").onclick = async () => {
     readCfg(); save("ghcfg", JSON.stringify(cfg));
     try {
-      status("接続を確認中…", "info");
+      cstatus("接続を確認中…", "info");
       const r = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, { headers: { Authorization: "Bearer " + cfg.token } });
       if (!r.ok) throw new Error(r.status === 401 ? "トークンが正しくないか、期限切れです。" : r.status === 404 ? "リポジトリが見つかりません(名前を確認してください)。" : "接続に失敗しました(" + r.status + ")");
       const j = await r.json();
       if (j.permissions && !j.permissions.push) throw new Error("書き込み権限がありません。トークンの Contents を Read and write にしてください。");
-      status("✔ 接続できました。投稿できます。", "ok"); $("settings").open = false; refreshList();
-    } catch (e) { status(e.message, "err"); }
+      cstatus("✔ 本人確認できました。投稿できます。", "ok"); $("settings").open = false; setAuthed(true);
+    } catch (e) { setAuthed(false); cstatus(e.message, "err"); }
   };
-  $("cfgClear").onclick = () => { try { localStorage.removeItem("ghcfg"); } catch (e) {} cfg = {}; $("cfgToken").value = ""; status("設定を消しました。", "info"); refreshList(); };
+  $("cfgClear").onclick = () => { try { localStorage.removeItem("ghcfg"); } catch (e) {} cfg = {}; $("cfgToken").value = ""; setAuthed(false); cstatus("設定を消しました。", "info"); };
 
   setKind("diary");
+  // 保存済みのトークンがあれば、静かに本人確認してから編集画面を出す
+  if (cfg.token && cfg.owner && cfg.repo) {
+    fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, { headers: { Authorization: "Bearer " + cfg.token } })
+      .then(r => r.ok ? r.json() : null).then(j => setAuthed(!!(j && j.permissions && j.permissions.push))).catch(() => setAuthed(false));
+  }
 })();
 </script>
 </body>

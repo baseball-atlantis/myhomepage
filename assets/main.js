@@ -48,7 +48,7 @@
   function linksOf(i) {
     const out = [];
     if (i.view) out.push(["読む", i.view, false]);
-    if (i.note) out.push(["読む", `notes/${i.note}/`, false]);
+    if (i.note) out.push(["読む", `notes/${i.note}/index.html`, false]);
     if (i.file) out.push(["PDFを開く", `files/${i.file}`, true]);
     if (i.repo) out.push(["GitHub", i.repo, true]);
     (i.links || []).forEach(l => out.push([l[0], l[1], true]));

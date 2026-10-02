@@ -221,3 +221,15 @@ footer { padding: 36px 0 50px; text-align: center; color: var(--sub); font-size:
 .postrow .acts { display: flex; gap: 12px; flex-shrink: 0; }
 .postrow button, .postrow a { background: none; border: 0; color: var(--a2); font: inherit; font-weight: 600; cursor: pointer; padding: 0; }
 .postrow button.del { color: #ff6b6b; }
+
+/* ---------- 投稿ボタン・本人確認 ---------- */
+.postbtn { border: 1px solid var(--line); background: var(--card); color: var(--text); padding: 7px 14px; border-radius: 999px; font: inherit; font-size: .85rem; cursor: pointer; }
+.postbtn:hover { border-color: var(--a1); }
+.modal { position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.6); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+.modal[hidden] { display: none; }
+.modal-card { width: 100%; max-width: 440px; background: var(--bg2); border: 1px solid var(--line); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); }
+.modal-card h3 { margin: 0 0 8px; font-size: 1.2rem; }
+.modal-card .help { color: var(--sub); font-size: .88rem; margin: 0 0 8px; }
+.gated { display: none; }
+body.authed .gated { display: block; }
+body.authed .tabs.gated { display: flex; }
