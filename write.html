@@ -79,7 +79,11 @@
       </div>
 
       <div id="bodyBox">
-        <div class="field" style="margin-bottom:0"><span>本文(文字を選んでから、ボタンで装飾できます)</span></div>
+        <div class="row" style="align-items:end">
+          <div class="field" style="margin-bottom:0"><span>本文(文字を選んでから、ボタンで装飾できます)</span></div>
+          <label class="field" style="margin:0"><span>行間(この投稿の読みやすさ)</span>
+            <select id="lh"><option value="tight">せまい</option><option value="normal">ふつう</option><option value="wide">広め</option><option value="xwide">ゆったり</option></select></label>
+        </div>
         <div class="toolbar" id="toolbar">
           <button type="button" data-fmt="b" title="太字 (Ctrl+B)"><b>B</b></button>
           <button type="button" data-fmt="i" title="斜体 (Ctrl+I)"><i>I</i></button>
@@ -274,6 +278,7 @@
     $("fileInput").value = ""; $("fileInfo").textContent = "";
     $("editingBar").style.display = "none"; $("preview").classList.remove("show"); $("imgInfo").textContent = "";
     $("submit").textContent = KINDS[kind].site ? "設定を保存する" : "投稿する";
+    $("lh").value = load("lhPref") || "normal";
     if (KINDS[kind].body) {
       const d = load("draft_" + kind);
       if (d) { try { const o = JSON.parse(d); $("title").value = o.title || ""; $("body").value = o.body || ""; $("desc").value = o.desc || ""; if (o.type) $("type").value = o.type; } catch (e) {} }
@@ -393,7 +398,12 @@
     if (k === "b" || k === "i" || k === "k") { e.preventDefault(); lastSel = { s: ta.selectionStart, e: ta.selectionEnd }; apply(k === "k" ? "link" : k); }
   });
 
+  /* 行間: 選んだ設定は次の投稿にも引き継ぐ */
+  function applyLh() { const v = $("lh").value; $("preview").className = "preview lh-" + v + ($("preview").classList.contains("show") ? " show" : ""); }
+  $("lh").value = load("lhPref") || "normal";
+  $("lh").onchange = () => { save("lhPref", $("lh").value); applyLh(); saveDraft(); };
   function renderPreview() {
+    applyLh();
     let html = D.md($("body").value);
     for (const [rel, v] of Object.entries(pending)) html = html.split(`src="${rel}"`).join(`src="${v.url}"`);
     $("preview").innerHTML = html || '<p class="help">本文がまだありません。</p>';
@@ -430,7 +440,7 @@
         const path = `${dir}/${used[i]}`;
         await putFile(path, pending[used[i]].b64, "Add image", await getSha(path));
       }
-      post = { ...post, body }; if (editing) post.updated = new Date().toISOString();
+      post = { ...post, body, spacing: $("lh").value }; if (editing) post.updated = new Date().toISOString();
       if (K.meta) Object.assign(post, { type: meta.type, desc: meta.desc });
       else meta.excerpt = D.excerpt(body);
       status("投稿を保存中…", "info");
@@ -492,7 +502,7 @@
       if (K.body) {
         const f = await getFile(`${K.dir}/posts/${id}.json`); if (!f) throw new Error("投稿が見つかりません。");
         const p = JSON.parse(f.text);
-        $("body").value = p.body; if (K.meta) fillMeta(p);
+        $("body").value = p.body; if (K.meta) fillMeta(p); $("lh").value = p.spacing || "normal"; applyLh();
       } else fillMeta(m);
       if (K.url) $("url").value = m.url || "";
       if (K.file) $("fileInfo").textContent = `いまのファイル: ${m.name || m.path}(変えない場合は何も選ばなくてOK)`;
