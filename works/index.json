@@ -1,1 +1,13 @@
-{ "posts": [] }
+{
+  "posts": [
+    {
+      "id": "20261002-140557",
+      "title": "セキュリティ調査ツール",
+      "date": "2026-10-02T05:06:52.510Z",
+      "type": "作品",
+      "desc": "チートシート及び情報整理ツール",
+      "hours": 2,
+      "url": "https://baseballbzlove-crypto.github.io/quick-ref/"
+    }
+  ]
+}
