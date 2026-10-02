@@ -3,6 +3,19 @@
   const $ = id => document.getElementById(id);
   const esc = D.esc;
 
+  /* 管理画面で保存したサイト設定(data/site.json)があれば上書きする */
+  try {
+    const r = await fetch("data/site.json?t=" + Date.now(), { cache: "no-store" });
+    if (r.ok) {
+      const c = await r.json();
+      ["pill", "lead", "owner", "aboutTitle", "contactText", "contactLink"].forEach(k => { if (c[k]) SITE[k] = c[k]; });
+      if (Array.isArray(c.title) && c.title[0]) SITE.title = c.title;
+      if (Array.isArray(c.about) && c.about.length) SITE.about = c.about;
+      if (Array.isArray(c.topics) && c.topics.length) SITE.topics = c.topics;
+      if (Array.isArray(c.journey) && c.journey.length) JOURNEY.splice(0, JOURNEY.length, ...c.journey);
+    }
+  } catch (e) {}
+
   $("pill").textContent = SITE.pill;
   $("h1").innerHTML = esc(SITE.title[0]) + '<br><span class="g">' + esc(SITE.title[1]) + '</span>';
   $("lead").textContent = SITE.lead;
@@ -15,16 +28,19 @@
   $("ctaBtn").href = SITE.contactLink;
   $("tl").innerHTML = JOURNEY.map(j => `<div class="tl-i"><time>${esc(j.date)}</time><h4>${esc(j.title)}</h4><p>${esc(j.text)}</p></div>`).join("");
 
-  /* ブラウザ(投稿画面)で作ったノートを読み込んで、成果物に合流させる */
+  /* 管理画面で追加したノート・資料・作品を読み込んで、成果物に合流させる */
   const dot = iso => { const d = new Date(iso); const p = n => String(n).padStart(2, "0"); return isNaN(d) ? "" : `${d.getFullYear()}.${p(d.getMonth()+1)}.${p(d.getDate())}`; };
-  let dyn = [];
-  try {
-    const r = await fetch("notes/index.json?t=" + Date.now(), { cache: "no-store" });
-    if (r.ok) dyn = ((await r.json()).posts || []).map(p => ({
-      title: p.title, type: p.type || "ノート", date: dot(p.date), desc: p.desc || "",
-      hours: p.hours, view: "notes/view.html?id=" + encodeURIComponent(p.id)
-    }));
-  } catch (e) {}
+  const loadList = async dir => {
+    try { const r = await fetch(dir + "/index.json?t=" + Date.now(), { cache: "no-store" }); return r.ok ? ((await r.json()).posts || []) : []; }
+    catch (e) { return []; }
+  };
+  const [nt, fl, wk] = await Promise.all(["notes", "files", "works"].map(loadList));
+  const base = p => ({ title: p.title, date: dot(p.date), desc: p.desc || "", hours: p.hours });
+  const dyn = [
+    ...nt.map(p => ({ ...base(p), type: p.type || "ノート", view: "notes/view.html?id=" + encodeURIComponent(p.id) })),
+    ...fl.map(p => ({ ...base(p), type: p.type || "資料", upload: p.path })),
+    ...wk.map(p => ({ ...base(p), type: p.type || "作品", url: p.url }))
+  ];
   const ALL = [...ITEMS, ...dyn];
 
   /* 数字のカウントアップ */
@@ -50,6 +66,8 @@
     if (i.view) out.push(["読む", i.view, false]);
     if (i.note) out.push(["読む", `notes/${i.note}/index.html`, false]);
     if (i.file) out.push(["PDFを開く", `files/${i.file}`, true]);
+    if (i.upload) out.push([/\.pdf$/i.test(i.upload) ? "PDFを開く" : "ファイルを開く", i.upload, true]);
+    if (i.url) out.push(["開く", i.url, true]);
     if (i.repo) out.push(["GitHub", i.repo, true]);
     (i.links || []).forEach(l => out.push([l[0], l[1], true]));
     return out;

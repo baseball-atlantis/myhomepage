@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>投稿する | Study Notes</title>
+<title>管理画面 | Study Notes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
@@ -17,11 +17,11 @@
 </div></nav>
 
 <main class="page">
-  <div class="eyebrow">Write</div>
-  <h1>投稿する</h1>
-  <p class="sec-lead">日記やノートをブラウザで書いて、そのまま公開できます。本人確認(GitHubトークン)が済むと、編集画面が表示されます。</p>
+  <div class="eyebrow">Admin</div>
+  <h1>管理画面</h1>
+  <p class="sec-lead">日記・ノート・資料(ファイル)・作品の追加と、サイト設定の変更を、すべてこの画面でできます。本人確認(GitHubトークン)が済むと編集画面が表示されます。</p>
 
-  <!-- 初期設定 -->
+  <!-- 本人確認・初期設定 -->
   <details class="panel" id="settings">
     <summary>🔐 本人確認・初期設定</summary>
     <div class="help">
@@ -48,33 +48,70 @@
     <div class="status" id="cfgStatus"></div>
   </details>
 
-  <div class="tabs gated" id="tabs">
+  <div class="tabs gated" id="tabs" style="flex-wrap:wrap">
     <button class="chip on" data-kind="diary">日記</button>
     <button class="chip" data-kind="note">ノート</button>
+    <button class="chip" data-kind="file">資料(ファイル)</button>
+    <button class="chip" data-kind="work">作品(リンク)</button>
+    <button class="chip" data-kind="site">サイト設定</button>
   </div>
 
   <div class="panel gated">
     <div id="editingBar" class="help" style="display:none;margin-top:0"></div>
-    <label class="field"><span>タイトル</span><input id="title" placeholder="タイトル"></label>
-    <div id="noteFields">
-      <div class="row">
-        <label class="field"><span>ジャンル(絞り込みボタンになります)</span>
-          <input id="type" list="typeList" value="ノート"><datalist id="typeList"><option>ノート</option><option>資料</option><option>作品</option><option>読書</option></datalist></label>
-        <label class="field"><span>かけた時間(時間・任意)</span><input id="hours" type="number" min="0" step="0.5" placeholder="例: 2"></label>
-      </div>
-      <label class="field"><span>一言説明(一覧に表示されます)</span><input id="desc" placeholder="どんな内容か一言で"></label>
-    </div>
-    <label class="field"><span>本文</span><textarea id="body" placeholder="ここに書きます。"></textarea></label>
 
-    <div class="bar">
-      <button class="btn sm" id="addImg">🖼 画像を追加</button>
-      <input type="file" id="imgInput" accept="image/*" multiple hidden>
-      <button class="btn sm" id="togglePrev">プレビュー</button>
-      <span class="help" style="margin:0" id="imgInfo"></span>
+    <!-- 投稿フォーム(日記・ノート・資料・作品) -->
+    <div id="postForm">
+      <label class="field"><span>タイトル</span><input id="title" placeholder="タイトル"></label>
+
+      <div id="metaFields">
+        <div class="row">
+          <label class="field"><span>ジャンル(絞り込みボタンになります)</span>
+            <input id="type" list="typeList"><datalist id="typeList"><option>ノート</option><option>資料</option><option>作品</option><option>読書</option></datalist></label>
+          <label class="field"><span>かけた時間(時間・任意)</span><input id="hours" type="number" min="0" step="0.5" placeholder="例: 2"></label>
+        </div>
+        <label class="field"><span>一言説明(一覧に表示されます)</span><input id="desc" placeholder="どんな内容か一言で"></label>
+      </div>
+
+      <div id="fileBox">
+        <label class="field"><span>ファイル(PDF・Word・画像・ZIPなど / 20MBまで)</span><input type="file" id="fileInput"></label>
+        <div class="help" id="fileInfo" style="margin-top:-4px"></div>
+      </div>
+
+      <div id="urlBox">
+        <label class="field"><span>リンク先のURL(GitHub・公開した作品のページなど)</span><input id="url" type="url" placeholder="https://"></label>
+      </div>
+
+      <div id="bodyBox">
+        <label class="field"><span>本文</span><textarea id="body" placeholder="ここに書きます。"></textarea></label>
+        <div class="bar">
+          <button class="btn sm" id="addImg" type="button">🖼 画像を追加</button>
+          <input type="file" id="imgInput" accept="image/*" multiple hidden>
+          <button class="btn sm" id="togglePrev" type="button">プレビュー</button>
+          <span class="help" style="margin:0" id="imgInfo"></span>
+        </div>
+        <div class="preview" id="preview"></div>
+        <div class="help">
+          書き方: <code>## 見出し</code> / <code>**太字**</code> / <code>- リスト</code> / <code>&gt; 引用</code> / <code>[文字](URL)</code> / コードは <code>```</code> で囲む。画像はボタンで追加すると本文に入ります。
+        </div>
+      </div>
     </div>
-    <div class="preview" id="preview"></div>
-    <div class="help">
-      書き方: <code>## 見出し</code> / <code>**太字**</code> / <code>- リスト</code> / <code>&gt; 引用</code> / <code>[文字](URL)</code> / コードは <code>```</code> で囲む。画像はボタンで追加すると本文に入ります。
+
+    <!-- サイト設定フォーム -->
+    <div id="siteForm">
+      <div class="help" style="margin-top:0">トップページの文章を変更します。保存すると、公開ページに反映されます(1〜2分)。</div>
+      <label class="field"><span>サイト名の横の一言(上のバッジ)</span><input id="s_pill"></label>
+      <div class="row">
+        <label class="field"><span>キャッチコピー 1行目</span><input id="s_t1"></label>
+        <label class="field"><span>キャッチコピー 2行目(カラフル表示)</span><input id="s_t2"></label>
+      </div>
+      <label class="field"><span>リード文</span><textarea id="s_lead" style="min-height:90px"></textarea></label>
+      <label class="field"><span>名前(フッターに表示)</span><input id="s_owner"></label>
+      <label class="field"><span>自己紹介の見出し</span><input id="s_aboutTitle"></label>
+      <label class="field"><span>自己紹介の文章(1行 = 1段落)</span><textarea id="s_about" style="min-height:110px"></textarea></label>
+      <label class="field"><span>学んでいること(「,」か改行で区切る)</span><textarea id="s_topics" style="min-height:70px"></textarea></label>
+      <label class="field"><span>連絡の文章</span><input id="s_contactText"></label>
+      <label class="field"><span>連絡ボタンのリンク(mailto:メールアドレス、またはSNSのURL)</span><input id="s_contactLink"></label>
+      <label class="field"><span>学習の歩み(1行 = 1件。「日付 | タイトル | 説明」の形)</span><textarea id="s_journey" style="min-height:140px" placeholder="2026.09 | ホームページを公開 | 学んだことを共有する場所を作った"></textarea></label>
     </div>
 
     <div class="bar">
@@ -84,26 +121,36 @@
     <div class="status" id="status"></div>
   </div>
 
-  <div class="panel gated">
+  <div class="panel gated" id="listPanel">
     <b id="listTitle">これまでの投稿</b>
     <div id="postList" style="margin-top:8px"><span class="help">設定すると表示されます。</span></div>
+    <div class="help">※ <code>data/content.js</code> に手書きした成果物は、ここには出ません(GitHub上で直接編集してください)。</div>
   </div>
 </main>
 
 <script src="assets/diary.js"></script>
+<script src="data/content.js"></script>
 <script src="assets/common.js"></script>
 <script>
 (() => {
   const $ = id => document.getElementById(id);
-  const KINDS = { diary: { dir: "diary", label: "日記" }, note: { dir: "notes", label: "ノート" } };
+  const KINDS = {
+    diary: { dir: "diary", label: "日記",   body: true },
+    note:  { dir: "notes", label: "ノート", body: true, meta: true, type: "ノート" },
+    file:  { dir: "files", label: "資料",   meta: true, file: true, type: "資料" },
+    work:  { dir: "works", label: "作品",   meta: true, url: true,  type: "作品" },
+    site:  { label: "サイト設定", site: true }
+  };
+  const MAX_FILE = 20 * 1024 * 1024;
   let kind = "diary";
   let cfg = {};
-  let editing = null;      // { id, sha, date } 編集中の投稿
-  let draftId = newId();   // 新規投稿のID
-  let pending = {};        // { "img/xxx.jpg": { b64, url } } 未アップロードの画像
+  let editing = null;      // { id, sha?, date, meta? }
+  let draftId = newId();
+  let pending = {};        // 未アップロードの画像
   let imgCount = 0;
   let authed = false;
-  function setAuthed(v) { authed = v; document.body.classList.toggle("authed", v); if (v) refreshList(); else $("settings").open = true; }
+  let siteSha = null;
+  let cache = [];          // いま表示中の一覧(index.json)
 
   /* ---------- 便利関数 ---------- */
   function newId() {
@@ -116,6 +163,9 @@
   function cstatus(msg, type) { const el = $("cfgStatus"); el.textContent = msg; el.className = "status show " + (type || "info"); }
   const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
   const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  const readDataUrl = file => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result.split(",")[1]); r.onerror = () => rej(new Error("ファイルを読み込めませんでした。")); r.readAsDataURL(file); });
+  const extOf = name => { const m = String(name).match(/\.([A-Za-z0-9]{1,8})$/); return m ? "." + m[1].toLowerCase() : ""; };
+  const sizeStr = n => n > 1048576 ? (n / 1048576).toFixed(1) + "MB" : Math.ceil(n / 1024) + "KB";
 
   /* ---------- 設定 ---------- */
   function guess() {
@@ -131,10 +181,10 @@
   $("cfgToken").value = cfg.token || "";
   $("cfgBranch").value = cfg.branch || "";
   if (!cfg.token) $("settings").open = true;
-
   function readCfg() {
     cfg = { owner: $("cfgOwner").value.trim(), repo: $("cfgRepo").value.trim(), token: $("cfgToken").value.trim(), branch: $("cfgBranch").value.trim() };
   }
+  function setAuthed(v) { authed = v; document.body.classList.toggle("authed", v); if (v) enter(); else $("settings").open = true; }
 
   /* ---------- GitHub API ---------- */
   async function api(method, path, body) {
@@ -152,13 +202,15 @@
       let m = ""; try { m = (await r.json()).message; } catch (e) {}
       const e = new Error(r.status === 401 ? "トークンが正しくないか、期限切れです。" :
         r.status === 403 || (r.status === 404 && method !== "GET") ? "権限がありません。トークンの Contents が Read and write か、対象リポジトリが合っているか確認してください。" :
-        `GitHubエラー(${r.status}) ${m}`);
+        r.status === 413 ? "ファイルが大きすぎます。" : `GitHubエラー(${r.status}) ${m}`);
       e.status = r.status; throw e;
     }
     return r.json();
   }
-  const getFile = async path => { const j = await api("GET", path); return j ? { sha: j.sha, text: dec(j.content) } : null; };
+  const getFile = async path => { const j = await api("GET", path); return j ? { sha: j.sha, text: j.content ? dec(j.content) : "" } : null; };
+  const getSha = async path => { const j = await api("GET", path).catch(() => null); return j ? j.sha : null; };
   const putFile = (path, b64, msg, sha) => api("PUT", path, { message: msg, content: b64, ...(sha ? { sha } : {}) });
+  const delFile = async path => { const sha = await getSha(path); if (sha) await api("DELETE", path, { message: "Delete " + path, sha }); };
 
   async function updateIndex(dir, fn) {
     for (let i = 0; i < 3; i++) {
@@ -172,33 +224,46 @@
     }
   }
 
-  /* ---------- 画面の切り替え ---------- */
+  /* ---------- タブ・フォームの切り替え ---------- */
+  const show = (id, v) => { $(id).style.display = v ? "" : "none"; };
   function setKind(k) {
-    kind = k;
+    kind = k; const K = KINDS[k];
     document.querySelectorAll("#tabs .chip").forEach(c => c.classList.toggle("on", c.dataset.kind === k));
-    $("noteFields").style.display = k === "note" ? "" : "none";
-    $("title").placeholder = k === "diary" ? "例:今日の勉強メモ" : "ノートのタイトル";
-    $("listTitle").textContent = `これまでの${KINDS[k].label}`;
-    resetForm(); if (authed) refreshList();
+    show("postForm", !K.site); show("siteForm", !!K.site);
+    show("metaFields", !!K.meta); show("fileBox", !!K.file); show("urlBox", !!K.url); show("bodyBox", !!K.body);
+    show("listPanel", !K.site);
+    $("title").placeholder = k === "diary" ? "例:今日の勉強メモ" : "タイトル";
+    $("listTitle").textContent = `これまでの${K.label}`;
+    resetForm();
+    if (authed) { if (K.site) loadSite(); else refreshList(); }
   }
   document.querySelectorAll("#tabs .chip").forEach(c => c.onclick = () => setKind(c.dataset.kind));
 
   function resetForm() {
     editing = null; draftId = newId(); pending = {}; imgCount = 0;
-    $("title").value = ""; $("body").value = ""; $("desc").value = ""; $("hours").value = ""; $("type").value = "ノート";
+    ["title", "body", "desc", "hours", "url"].forEach(id => $(id).value = "");
+    $("type").value = KINDS[kind].type || "";
+    $("fileInput").value = ""; $("fileInfo").textContent = "";
     $("editingBar").style.display = "none"; $("preview").classList.remove("show"); $("imgInfo").textContent = "";
-    $("submit").textContent = "投稿する";
-    const d = load("draft_" + kind);
-    if (d) { try { const o = JSON.parse(d); $("title").value = o.title || ""; $("body").value = o.body || ""; $("desc").value = o.desc || ""; if (o.type) $("type").value = o.type; } catch (e) {} }
+    $("submit").textContent = KINDS[kind].site ? "設定を保存する" : "投稿する";
+    if (KINDS[kind].body) {
+      const d = load("draft_" + kind);
+      if (d) { try { const o = JSON.parse(d); $("title").value = o.title || ""; $("body").value = o.body || ""; $("desc").value = o.desc || ""; if (o.type) $("type").value = o.type; } catch (e) {} }
+    }
   }
   function saveDraft() {
-    if (editing) return;
+    if (editing || !KINDS[kind].body) return;
     save("draft_" + kind, JSON.stringify({ title: $("title").value, body: $("body").value, desc: $("desc").value, type: $("type").value }));
   }
   ["title", "body", "desc", "type"].forEach(id => $(id).addEventListener("input", saveDraft));
-  $("reset").onclick = () => { try { localStorage.removeItem("draft_" + kind); } catch (e) {} setKind(kind); status("", ""); $("status").className = "status"; };
+  $("reset").onclick = () => { try { localStorage.removeItem("draft_" + kind); } catch (e) {} setKind(kind); $("status").className = "status"; };
+  $("fileInput").onchange = e => {
+    const f = e.target.files[0];
+    $("fileInfo").textContent = f ? (f.size > MAX_FILE ? `⚠ ${f.name}(${sizeStr(f.size)})は大きすぎます。20MB以下にしてください。` : `${f.name}(${sizeStr(f.size)})`) : "";
+    if (f && !$("title").value) $("title").value = f.name.replace(/\.[^.]+$/, "");
+  };
 
-  /* ---------- 画像 ---------- */
+  /* ---------- 画像(日記・ノート) ---------- */
   $("addImg").onclick = () => $("imgInput").click();
   function toJpeg(file) {
     return new Promise((res, rej) => {
@@ -230,8 +295,6 @@
     $("imgInfo").textContent = Object.keys(pending).length ? `追加した画像: ${Object.keys(pending).length}枚(投稿時に保存されます)` : "";
     saveDraft(); if ($("preview").classList.contains("show")) renderPreview();
   };
-
-  /* ---------- プレビュー ---------- */
   function renderPreview() {
     let html = D.md($("body").value);
     for (const [rel, v] of Object.entries(pending)) html = html.split(`src="${rel}"`).join(`src="${v.url}"`);
@@ -242,91 +305,150 @@
 
   /* ---------- 投稿 ---------- */
   $("submit").onclick = async () => {
-    const title = $("title").value.trim(), body = $("body").value;
-    if (!title) return status("タイトルを入力してください。", "err");
-    if (!body.trim()) return status("本文を入力してください。", "err");
-    const dir = KINDS[kind].dir, id = editing ? editing.id : draftId;
-    const date = editing ? editing.date : new Date().toISOString();
     const btn = $("submit"); btn.disabled = true;
-    try {
-      // 1) 本文で使っている画像だけアップロード
+    try { if (KINDS[kind].site) await saveSite(); else await submitPost(); }
+    catch (e) { status("失敗しました: " + e.message, "err"); }
+    btn.disabled = false;
+  };
+
+  async function submitPost() {
+    const K = KINDS[kind], dir = K.dir;
+    const title = $("title").value.trim(), body = $("body").value;
+    if (!title) throw new Error("タイトルを入力してください。");
+    if (K.body && !body.trim()) throw new Error("本文を入力してください。");
+    const id = editing ? editing.id : draftId;
+    const date = editing ? editing.date : new Date().toISOString();
+    const meta = { id, title, date };
+    let post = { id, title, date };
+
+    if (K.meta) {
+      meta.type = $("type").value.trim() || K.type; meta.desc = $("desc").value.trim();
+      const h = parseFloat($("hours").value); if (h > 0) meta.hours = h;
+    }
+    if (K.body) {
+      // 画像
       const used = Object.keys(pending).filter(rel => body.includes(`(${rel})`));
       for (let i = 0; i < used.length; i++) {
         status(`画像をアップロード中… (${i + 1}/${used.length})`, "info");
         const path = `${dir}/${used[i]}`;
-        const ex = await getFile(path).catch(() => null);
-        await putFile(path, pending[used[i]].b64, "Add image", ex && ex.sha);
+        await putFile(path, pending[used[i]].b64, "Add image", await getSha(path));
       }
-      // 2) 投稿本体
+      post = { ...post, body }; if (editing) post.updated = new Date().toISOString();
+      if (K.meta) Object.assign(post, { type: meta.type, desc: meta.desc, ...(meta.hours ? { hours: meta.hours } : {}) });
+      else meta.excerpt = D.excerpt(body);
       status("投稿を保存中…", "info");
-      const post = { id, title, date, body };
-      if (editing) post.updated = new Date().toISOString();
-      const meta = { id, title, date };
-      if (kind === "diary") meta.excerpt = D.excerpt(body);
-      else {
-        post.type = $("type").value.trim() || "ノート"; post.desc = $("desc").value.trim();
-        const h = parseFloat($("hours").value); if (h > 0) post.hours = h;
-        Object.assign(meta, { type: post.type, desc: post.desc }); if (post.hours) meta.hours = post.hours;
-      }
       const ppath = `${dir}/posts/${id}.json`;
-      const ex = editing ? { sha: editing.sha } : await getFile(ppath);
-      await putFile(ppath, enc(JSON.stringify(post, null, 2) + "\n"), `${editing ? "Edit" : "Add"} ${kind}: ${title}`, ex && ex.sha);
-      // 3) 一覧(index.json)を更新
-      status("一覧を更新中…", "info");
-      await updateIndex(dir, ps => [...ps.filter(p => p.id !== id), meta]);
-      const url = kind === "diary" ? `diary/post.html?id=${id}` : `notes/view.html?id=${id}`;
-      try { localStorage.removeItem("draft_" + kind); } catch (e) {}
-      $("status").innerHTML = `✔ 投稿しました。公開ページへの反映まで1〜2分かかります。 <a class="mini-link" href="${url}" target="_blank" rel="noopener">開いて確認 →</a>`;
-      $("status").className = "status show ok";
-      editing = null; draftId = newId(); pending = {}; imgCount = 0;
-      $("title").value = ""; $("body").value = ""; $("desc").value = ""; $("hours").value = ""; $("imgInfo").textContent = "";
-      $("editingBar").style.display = "none"; $("preview").classList.remove("show"); btn.textContent = "投稿する";
-      refreshList();
-    } catch (e) { status("失敗しました: " + e.message, "err"); }
-    btn.disabled = false;
-  };
+      await putFile(ppath, enc(JSON.stringify(post, null, 2) + "\n"), `${editing ? "Edit" : "Add"} ${kind}: ${title}`, await getSha(ppath));
+    }
+    if (K.file) {
+      const f = $("fileInput").files[0];
+      if (!f && !editing) throw new Error("ファイルを選んでください。");
+      if (f) {
+        if (f.size > MAX_FILE) throw new Error("ファイルが大きすぎます(20MBまで)。");
+        const path = `files/up/${id}${extOf(f.name)}`;
+        status("ファイルをアップロード中…(大きいと少し時間がかかります)", "info");
+        await putFile(path, await readDataUrl(f), `Add file: ${title}`, await getSha(path));
+        if (editing && editing.meta.path && editing.meta.path !== path) await delFile(editing.meta.path).catch(() => {});
+        Object.assign(meta, { path, name: f.name, size: f.size });
+      } else Object.assign(meta, { path: editing.meta.path, name: editing.meta.name, size: editing.meta.size });
+    }
+    if (K.url) {
+      const u = $("url").value.trim();
+      if (!/^https?:\/\//i.test(u)) throw new Error("URLは http:// か https:// で始まる形で入力してください。");
+      meta.url = u;
+    }
+    status("一覧を更新中…", "info");
+    await updateIndex(dir, ps => [...ps.filter(p => p.id !== id), meta]);
+
+    const viewUrl = kind === "diary" ? `diary/post.html?id=${id}` : kind === "note" ? `notes/view.html?id=${id}` : "index.html#works";
+    try { localStorage.removeItem("draft_" + kind); } catch (e) {}
+    $("status").innerHTML = `✔ 保存しました。公開ページへの反映まで1〜2分かかります。 <a class="mini-link" href="${viewUrl}" target="_blank" rel="noopener">開いて確認 →</a>`;
+    $("status").className = "status show ok";
+    const keep = $("status").innerHTML; resetForm(); $("status").innerHTML = keep; $("status").className = "status show ok";
+    refreshList();
+  }
 
   /* ---------- 過去の投稿: 編集・削除 ---------- */
   async function refreshList() {
-    const box = $("postList");
-    if (!cfg.token) { box.innerHTML = '<span class="help">設定すると表示されます。</span>'; return; }
+    const box = $("postList"), K = KINDS[kind];
+    if (!cfg.token || K.site) return;
     box.innerHTML = '<span class="help">読み込み中…</span>';
     try {
-      const dir = KINDS[kind].dir, f = await getFile(`${dir}/index.json`);
-      const posts = f ? (JSON.parse(f.text).posts || []) : [];
-      if (!posts.length) { box.innerHTML = '<span class="help">まだありません。</span>'; return; }
-      const view = id => kind === "diary" ? `diary/post.html?id=${id}` : `notes/view.html?id=${id}`;
-      box.innerHTML = posts.map(p => `<div class="postrow"><div class="t"><b>${D.esc(p.title)}</b><small>${D.fmtDate(p.date)}</small></div>
-        <div class="acts"><a href="${view(encodeURIComponent(p.id))}" target="_blank" rel="noopener">表示</a>
+      const f = await getFile(`${K.dir}/index.json`);
+      cache = f ? (JSON.parse(f.text).posts || []) : [];
+      if (!cache.length) { box.innerHTML = '<span class="help">まだありません。</span>'; return; }
+      const link = p => kind === "diary" ? `diary/post.html?id=${encodeURIComponent(p.id)}` : kind === "note" ? `notes/view.html?id=${encodeURIComponent(p.id)}` : kind === "file" ? p.path : p.url;
+      box.innerHTML = cache.map(p => `<div class="postrow"><div class="t"><b>${D.esc(p.title)}</b><small>${D.fmtDate(p.date)}${p.type ? " ・ " + D.esc(p.type) : ""}</small></div>
+        <div class="acts"><a href="${D.esc(link(p))}" target="_blank" rel="noopener">表示</a>
         <button data-edit="${D.esc(p.id)}">編集</button><button class="del" data-del="${D.esc(p.id)}">削除</button></div></div>`).join("");
       box.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => editPost(b.dataset.edit));
       box.querySelectorAll("[data-del]").forEach(b => b.onclick = () => delPost(b.dataset.del));
     } catch (e) { box.innerHTML = `<span class="help">読み込めませんでした: ${D.esc(e.message)}</span>`; }
   }
+  function fillMeta(p) { $("type").value = p.type || KINDS[kind].type || ""; $("desc").value = p.desc || ""; $("hours").value = p.hours || ""; }
   async function editPost(id) {
+    const K = KINDS[kind];
     try {
       status("読み込み中…", "info");
-      const f = await getFile(`${KINDS[kind].dir}/posts/${id}.json`);
-      if (!f) return status("投稿が見つかりません。", "err");
-      const p = JSON.parse(f.text);
-      editing = { id, sha: f.sha, date: p.date }; pending = {};
-      $("title").value = p.title; $("body").value = p.body;
-      if (kind === "note") { $("type").value = p.type || "ノート"; $("desc").value = p.desc || ""; $("hours").value = p.hours || ""; }
-      $("editingBar").innerHTML = `✎ 「${D.esc(p.title)}」を編集中です。`; $("editingBar").style.display = "block";
+      const m = cache.find(p => p.id === id); if (!m) throw new Error("投稿が見つかりません。");
+      resetForm(); $("title").value = m.title;
+      if (K.body) {
+        const f = await getFile(`${K.dir}/posts/${id}.json`); if (!f) throw new Error("投稿が見つかりません。");
+        const p = JSON.parse(f.text);
+        $("body").value = p.body; if (K.meta) fillMeta(p);
+      } else fillMeta(m);
+      if (K.url) $("url").value = m.url || "";
+      if (K.file) $("fileInfo").textContent = `いまのファイル: ${m.name || m.path}(変えない場合は何も選ばなくてOK)`;
+      editing = { id, date: m.date, meta: m };
+      $("editingBar").innerHTML = `✎ 「${D.esc(m.title)}」を編集中です。`; $("editingBar").style.display = "block";
       $("submit").textContent = "更新する"; $("status").className = "status";
       window.scrollTo({ top: $("title").getBoundingClientRect().top + scrollY - 140, behavior: "smooth" });
     } catch (e) { status("失敗しました: " + e.message, "err"); }
   }
   async function delPost(id) {
-    if (!confirm("この投稿を削除します。よろしいですか?")) return;
+    if (!confirm("削除します。よろしいですか?")) return;
+    const K = KINDS[kind];
     try {
       status("削除中…", "info");
-      const dir = KINDS[kind].dir, path = `${dir}/posts/${id}.json`, f = await getFile(path);
-      if (f) await api("DELETE", path, { message: "Delete " + id, sha: f.sha });
-      await updateIndex(dir, ps => ps.filter(p => p.id !== id));
+      const m = cache.find(p => p.id === id);
+      if (K.body) await delFile(`${K.dir}/posts/${id}.json`);
+      if (K.file && m && m.path) await delFile(m.path);
+      await updateIndex(K.dir, ps => ps.filter(p => p.id !== id));
       status("削除しました。公開ページへの反映まで1〜2分かかります。", "ok");
       refreshList();
     } catch (e) { status("失敗しました: " + e.message, "err"); }
+  }
+
+  /* ---------- サイト設定 ---------- */
+  const lines = s => s.split("\n").map(x => x.trim()).filter(Boolean);
+  function fillSite(s) {
+    $("s_pill").value = s.pill || ""; $("s_t1").value = (s.title || [])[0] || ""; $("s_t2").value = (s.title || [])[1] || "";
+    $("s_lead").value = s.lead || ""; $("s_owner").value = s.owner || ""; $("s_aboutTitle").value = s.aboutTitle || "";
+    $("s_about").value = (s.about || []).join("\n"); $("s_topics").value = (s.topics || []).join(", ");
+    $("s_contactText").value = s.contactText || ""; $("s_contactLink").value = s.contactLink || "";
+    $("s_journey").value = (s.journey || []).map(j => `${j.date} | ${j.title} | ${j.text}`).join("\n");
+  }
+  async function loadSite() {
+    status("設定を読み込み中…", "info");
+    try {
+      const f = await getFile("data/site.json"); siteSha = f ? f.sha : null;
+      let s = {}; try { if (f) s = JSON.parse(f.text); } catch (e) {}
+      fillSite({ ...SITE, journey: JOURNEY, ...s });
+      $("status").className = "status";
+    } catch (e) { status("読み込めませんでした: " + e.message, "err"); }
+  }
+  async function saveSite() {
+    const s = {
+      pill: $("s_pill").value.trim(), title: [$("s_t1").value.trim(), $("s_t2").value.trim()], lead: $("s_lead").value.trim(),
+      owner: $("s_owner").value.trim(), aboutTitle: $("s_aboutTitle").value.trim(), about: lines($("s_about").value),
+      topics: $("s_topics").value.split(/[,、\n]/).map(x => x.trim()).filter(Boolean),
+      contactText: $("s_contactText").value.trim(), contactLink: $("s_contactLink").value.trim(),
+      journey: lines($("s_journey").value).map(l => { const [d, t, ...r] = l.split(/[|｜]/).map(x => x.trim()); return { date: d || "", title: t || "", text: r.join(" | ") }; })
+    };
+    status("設定を保存中…", "info");
+    const path = "data/site.json";
+    await putFile(path, enc(JSON.stringify(s, null, 2) + "\n"), "Update site settings", await getSha(path));
+    status("✔ 保存しました。公開ページへの反映まで1〜2分かかります。", "ok");
   }
 
   /* ---------- 設定ボタン ---------- */
@@ -338,13 +460,14 @@
       if (!r.ok) throw new Error(r.status === 401 ? "トークンが正しくないか、期限切れです。" : r.status === 404 ? "リポジトリが見つかりません(名前を確認してください)。" : "接続に失敗しました(" + r.status + ")");
       const j = await r.json();
       if (j.permissions && !j.permissions.push) throw new Error("書き込み権限がありません。トークンの Contents を Read and write にしてください。");
-      cstatus("✔ 本人確認できました。投稿できます。", "ok"); $("settings").open = false; setAuthed(true);
+      cstatus("✔ 本人確認できました。", "ok"); $("settings").open = false; setAuthed(true);
     } catch (e) { setAuthed(false); cstatus(e.message, "err"); }
   };
   $("cfgClear").onclick = () => { try { localStorage.removeItem("ghcfg"); } catch (e) {} cfg = {}; $("cfgToken").value = ""; setAuthed(false); cstatus("設定を消しました。", "info"); };
 
+  function enter() { const K = KINDS[kind]; if (K.site) loadSite(); else refreshList(); }
+
   setKind("diary");
-  // 保存済みのトークンがあれば、静かに本人確認してから編集画面を出す
   if (cfg.token && cfg.owner && cfg.repo) {
     fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, { headers: { Authorization: "Bearer " + cfg.token } })
       .then(r => r.ok ? r.json() : null).then(j => setAuthed(!!(j && j.permissions && j.permissions.push))).catch(() => setAuthed(false));
