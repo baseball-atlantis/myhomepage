@@ -64,11 +64,8 @@
       <label class="field"><span>タイトル</span><input id="title" placeholder="タイトル"></label>
 
       <div id="metaFields">
-        <div class="row">
-          <label class="field"><span>ジャンル(絞り込みボタンになります)</span>
-            <input id="type" list="typeList"><datalist id="typeList"><option>ノート</option><option>資料</option><option>作品</option><option>読書</option></datalist></label>
-          <label class="field"><span>かけた時間(時間・任意)</span><input id="hours" type="number" min="0" step="0.5" placeholder="例: 2"></label>
-        </div>
+        <label class="field"><span>ジャンル(絞り込みボタンになります)</span>
+          <input id="type" list="typeList"><datalist id="typeList"><option>ノート</option><option>資料</option><option>作品</option><option>読書</option></datalist></label>
         <label class="field"><span>一言説明(一覧に表示されます)</span><input id="desc" placeholder="どんな内容か一言で"></label>
       </div>
 
@@ -111,6 +108,11 @@
       <label class="field"><span>学んでいること(「,」か改行で区切る)</span><textarea id="s_topics" style="min-height:70px"></textarea></label>
       <label class="field"><span>連絡の文章</span><input id="s_contactText"></label>
       <label class="field"><span>連絡ボタンのリンク(mailto:メールアドレス、またはSNSのURL)</span><input id="s_contactLink"></label>
+      <label class="field"><span>アクセスカウンターのコード(GoatCounterのサイトコード。空欄なら非表示)</span><input id="s_counter" placeholder="例: my-study-notes"></label>
+      <div class="help" style="margin-top:-6px">
+        使い方: <a class="mini-link" href="https://www.goatcounter.com/signup" target="_blank" rel="noopener">GoatCounter</a>(無料)に登録 → 決めた「Code」をここに入力。
+        さらに GoatCounter の Settings で <b>「Allow adding visitor counts on your website」</b> にチェックを入れて保存してください。
+      </div>
       <label class="field"><span>学習の歩み(1行 = 1件。「日付 | タイトル | 説明」の形)</span><textarea id="s_journey" style="min-height:140px" placeholder="2026.09 | ホームページを公開 | 学んだことを共有する場所を作った"></textarea></label>
     </div>
 
@@ -241,7 +243,7 @@
 
   function resetForm() {
     editing = null; draftId = newId(); pending = {}; imgCount = 0;
-    ["title", "body", "desc", "hours", "url"].forEach(id => $(id).value = "");
+    ["title", "body", "desc", "url"].forEach(id => $(id).value = "");
     $("type").value = KINDS[kind].type || "";
     $("fileInput").value = ""; $("fileInfo").textContent = "";
     $("editingBar").style.display = "none"; $("preview").classList.remove("show"); $("imgInfo").textContent = "";
@@ -323,7 +325,6 @@
 
     if (K.meta) {
       meta.type = $("type").value.trim() || K.type; meta.desc = $("desc").value.trim();
-      const h = parseFloat($("hours").value); if (h > 0) meta.hours = h;
     }
     if (K.body) {
       // 画像
@@ -334,7 +335,7 @@
         await putFile(path, pending[used[i]].b64, "Add image", await getSha(path));
       }
       post = { ...post, body }; if (editing) post.updated = new Date().toISOString();
-      if (K.meta) Object.assign(post, { type: meta.type, desc: meta.desc, ...(meta.hours ? { hours: meta.hours } : {}) });
+      if (K.meta) Object.assign(post, { type: meta.type, desc: meta.desc });
       else meta.excerpt = D.excerpt(body);
       status("投稿を保存中…", "info");
       const ppath = `${dir}/posts/${id}.json`;
@@ -385,7 +386,7 @@
       box.querySelectorAll("[data-del]").forEach(b => b.onclick = () => delPost(b.dataset.del));
     } catch (e) { box.innerHTML = `<span class="help">読み込めませんでした: ${D.esc(e.message)}</span>`; }
   }
-  function fillMeta(p) { $("type").value = p.type || KINDS[kind].type || ""; $("desc").value = p.desc || ""; $("hours").value = p.hours || ""; }
+  function fillMeta(p) { $("type").value = p.type || KINDS[kind].type || ""; $("desc").value = p.desc || ""; }
   async function editPost(id) {
     const K = KINDS[kind];
     try {
@@ -425,7 +426,7 @@
     $("s_pill").value = s.pill || ""; $("s_t1").value = (s.title || [])[0] || ""; $("s_t2").value = (s.title || [])[1] || "";
     $("s_lead").value = s.lead || ""; $("s_owner").value = s.owner || ""; $("s_aboutTitle").value = s.aboutTitle || "";
     $("s_about").value = (s.about || []).join("\n"); $("s_topics").value = (s.topics || []).join(", ");
-    $("s_contactText").value = s.contactText || ""; $("s_contactLink").value = s.contactLink || "";
+    $("s_counter").value = s.counter || ""; $("s_contactText").value = s.contactText || ""; $("s_contactLink").value = s.contactLink || "";
     $("s_journey").value = (s.journey || []).map(j => `${j.date} | ${j.title} | ${j.text}`).join("\n");
   }
   async function loadSite() {
@@ -442,7 +443,7 @@
       pill: $("s_pill").value.trim(), title: [$("s_t1").value.trim(), $("s_t2").value.trim()], lead: $("s_lead").value.trim(),
       owner: $("s_owner").value.trim(), aboutTitle: $("s_aboutTitle").value.trim(), about: lines($("s_about").value),
       topics: $("s_topics").value.split(/[,、\n]/).map(x => x.trim()).filter(Boolean),
-      contactText: $("s_contactText").value.trim(), contactLink: $("s_contactLink").value.trim(),
+      counter: $("s_counter").value.trim(), contactText: $("s_contactText").value.trim(), contactLink: $("s_contactLink").value.trim(),
       journey: lines($("s_journey").value).map(l => { const [d, t, ...r] = l.split(/[|｜]/).map(x => x.trim()); return { date: d || "", title: t || "", text: r.join(" | ") }; })
     };
     status("設定を保存中…", "info");

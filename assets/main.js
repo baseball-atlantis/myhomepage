@@ -8,7 +8,7 @@
     const r = await fetch("data/site.json?t=" + Date.now(), { cache: "no-store" });
     if (r.ok) {
       const c = await r.json();
-      ["pill", "lead", "owner", "aboutTitle", "contactText", "contactLink"].forEach(k => { if (c[k]) SITE[k] = c[k]; });
+      ["pill", "lead", "owner", "aboutTitle", "contactText", "contactLink", "counter"].forEach(k => { if (c[k]) SITE[k] = c[k]; });
       if (Array.isArray(c.title) && c.title[0]) SITE.title = c.title;
       if (Array.isArray(c.about) && c.about.length) SITE.about = c.about;
       if (Array.isArray(c.topics) && c.topics.length) SITE.topics = c.topics;
@@ -35,20 +35,21 @@
     catch (e) { return []; }
   };
   const [nt, fl, wk] = await Promise.all(["notes", "files", "works"].map(loadList));
-  const base = p => ({ title: p.title, date: dot(p.date), desc: p.desc || "", hours: p.hours });
+  const base = p => ({ title: p.title, date: dot(p.date), desc: p.desc || "", });
   const dyn = [
     ...nt.map(p => ({ ...base(p), type: p.type || "ノート", view: "notes/view.html?id=" + encodeURIComponent(p.id) })),
     ...fl.map(p => ({ ...base(p), type: p.type || "資料", upload: p.path })),
     ...wk.map(p => ({ ...base(p), type: p.type || "作品", url: p.url }))
   ];
   const ALL = [...ITEMS, ...dyn];
+  const diaryPosts = await loadList("diary");
 
   /* 数字のカウントアップ */
   const autoN = s => {
     const a = s.auto;
     if (a === "items") return ALL.length;
     if (a === "types") return new Set(ALL.map(i => i.type)).size;
-    if (a === "hours") return Math.round(ALL.reduce((t, i) => t + (+i.hours || 0), 0));
+    if (a === "diary") return diaryPosts.length;
     if (a && a.startsWith("type:")) return ALL.filter(i => i.type === a.slice(5)).length;
     return s.n;
   };
@@ -98,18 +99,30 @@
   render();
 
   /* 日記: 最新3件 */
-  try {
-    const r = await fetch("diary/index.json?t=" + Date.now(), { cache: "no-store" });
-    if (r.ok) {
-      const posts = ((await r.json()).posts || []).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
-      if (posts.length) {
-        $("diaryList").innerHTML = posts.map(p => `
-          <a class="card" href="diary/post.html?id=${encodeURIComponent(p.id)}">
-            <div class="meta"><span>${D.fmtDate(p.date)}</span></div>
-            <h3>${esc(p.title)}</h3><p>${esc(p.excerpt || "")}</p>
-          </a>`).join("");
-        $("diary").hidden = false;
+  const latest = [...diaryPosts].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 3);
+  if (latest.length) {
+    $("diaryList").innerHTML = latest.map(p => `
+      <a class="card" href="diary/post.html?id=${encodeURIComponent(p.id)}">
+        <div class="meta"><span>${D.fmtDate(p.date)}</span></div>
+        <h3>${esc(p.title)}</h3><p>${esc(p.excerpt || "")}</p>
+      </a>`).join("");
+    $("diary").hidden = false;
+  }
+
+  /* 累計アクセス数(GoatCounter) */
+  const code = String(SITE.counter || "").trim();
+  if (/^[a-z0-9-]+$/i.test(code)) {
+    try {
+      const r = await fetch(`https://${code}.goatcounter.com/counter/TOTAL.json`);
+      if (r.ok) {
+        const n = parseInt(String((await r.json()).count).replace(/[^\d]/g, ""), 10);
+        if (!isNaN(n)) {
+          $("visitPill").hidden = false;
+          const el = $("visitNum"), t0 = performance.now(), dur = 1400;
+          const step = t => { const p = Math.min((t - t0) / dur, 1); el.textContent = Math.round(n * (1 - Math.pow(1 - p, 3))).toLocaleString("ja-JP"); if (p < 1) requestAnimationFrame(step); };
+          requestAnimationFrame(step);
+        }
       }
-    }
-  } catch (e) {}
+    } catch (e) {}
+  }
 })();

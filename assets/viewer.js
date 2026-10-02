@@ -9,9 +9,8 @@
     const p = await r.json();
     document.title = `${p.title} | Study Notes`;
     const tag = p.type ? `<span class="tag">${D.esc(p.type)}</span>` : "";
-    const hours = p.hours ? `<span>${D.esc(p.hours)}時間</span>` : "";
     app.innerHTML = `
-      <div class="meta" style="justify-content:flex-start;gap:12px">${tag}<span>${D.fmtDate(p.date, true)}</span>${hours}</div>
+      <div class="meta" style="justify-content:flex-start;gap:12px">${tag}<span>${D.fmtDate(p.date, true)}</span></div>
       <h1>${D.esc(p.title)}</h1>
       ${p.desc ? `<p class="sec-lead">${D.esc(p.desc)}</p>` : ""}
       <div class="article">${D.md(p.body)}</div>`;

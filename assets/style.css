@@ -233,3 +233,11 @@ footer { padding: 36px 0 50px; text-align: center; color: var(--sub); font-size:
 .gated { display: none; }
 body.authed .gated { display: block; }
 body.authed .tabs.gated { display: flex; }
+
+/* ---------- アクセスカウンター ---------- */
+.pills { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.pill.vis { color: var(--text); border-color: transparent; background: linear-gradient(var(--bg2), var(--bg2)) padding-box, var(--grad) border-box; border: 1px solid transparent; }
+.pill.vis[hidden] { display: none; }
+.pill.vis svg { color: var(--a2); }
+.pill.vis .vlbl { color: var(--sub); }
+.pill.vis b { font-variant-numeric: tabular-nums; letter-spacing: .02em; font-weight: 700; background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
