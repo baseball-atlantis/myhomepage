@@ -79,7 +79,32 @@
       </div>
 
       <div id="bodyBox">
-        <label class="field"><span>本文</span><textarea id="body" placeholder="ここに書きます。"></textarea></label>
+        <div class="field" style="margin-bottom:0"><span>本文(文字を選んでから、ボタンで装飾できます)</span></div>
+        <div class="toolbar" id="toolbar">
+          <button type="button" data-fmt="b" title="太字 (Ctrl+B)"><b>B</b></button>
+          <button type="button" data-fmt="i" title="斜体 (Ctrl+I)"><i>I</i></button>
+          <button type="button" data-fmt="u" title="下線"><u>U</u></button>
+          <button type="button" data-fmt="s" title="取り消し線"><s>S</s></button>
+          <button type="button" data-fmt="mark" title="マーカー">マーカー</button>
+          <span class="sep"></span>
+          <select id="tbSize" title="文字サイズ"><option value="">文字サイズ</option><option value="small">小さく</option><option value="large">大きく</option><option value="xlarge">特大</option><option value="xxlarge">超特大</option></select>
+          <span id="tbColors" style="display:flex;gap:5px;align-items:center" title="文字色"></span>
+          <input type="color" id="tbColor" value="#ff6b6b" title="好きな文字色">
+          <span class="sep"></span>
+          <button type="button" data-fmt="left" title="左寄せ">左</button>
+          <button type="button" data-fmt="center" title="中央寄せ">中央</button>
+          <button type="button" data-fmt="right" title="右寄せ">右</button>
+          <span class="sep"></span>
+          <button type="button" data-fmt="h2" title="見出し">見出し</button>
+          <button type="button" data-fmt="h3" title="小見出し">小見出し</button>
+          <button type="button" data-fmt="quote" title="引用">引用</button>
+          <button type="button" data-fmt="ul" title="箇条書き">・リスト</button>
+          <button type="button" data-fmt="ol" title="番号リスト">1.リスト</button>
+          <button type="button" data-fmt="hr" title="区切り線">―</button>
+          <button type="button" data-fmt="link" title="リンク (Ctrl+K)">リンク</button>
+          <button type="button" data-fmt="code" title="コード">コード</button>
+        </div>
+        <label class="field" style="margin-top:0"><textarea id="body" placeholder="ここに書きます。"></textarea></label>
         <div class="bar">
           <button class="btn sm" id="addImg" type="button">🖼 画像を追加</button>
           <input type="file" id="imgInput" accept="image/*" multiple hidden>
@@ -88,7 +113,8 @@
         </div>
         <div class="preview" id="preview"></div>
         <div class="help">
-          書き方: <code>## 見出し</code> / <code>**太字**</code> / <code>- リスト</code> / <code>&gt; 引用</code> / <code>[文字](URL)</code> / コードは <code>```</code> で囲む。画像はボタンで追加すると本文に入ります。
+          ボタンで入る記号をそのまま手で書いてもOKです。例: <code>[color=#ff6b6b]赤い文字[/color]</code> / <code>[size=large]大きい文字[/size]</code> /
+          右寄せは行だけの <code>[right]</code> と <code>[/right]</code> で段落をはさむ。画像の大きさは <code>![](img/xxx.jpg){w=50}</code>(幅50%)。装飾は段落をまたげません。
         </div>
       </div>
     </div>
@@ -297,6 +323,76 @@
     $("imgInfo").textContent = Object.keys(pending).length ? `追加した画像: ${Object.keys(pending).length}枚(投稿時に保存されます)` : "";
     saveDraft(); if ($("preview").classList.contains("show")) renderPreview();
   };
+  /* ---------- 装飾ツールバー ---------- */
+  const ta = $("body");
+  let lastSel = { s: 0, e: 0 };
+  ["keyup", "mouseup", "select", "input", "blur", "click"].forEach(ev => ta.addEventListener(ev, () => { lastSel = { s: ta.selectionStart, e: ta.selectionEnd }; }));
+  const COLORS = ["#ff6b6b", "#ff9f43", "#f5c518", "#34d399", "#4da3ff", "#9b8cff", "#ff6ec7", "#9aa3b5"];
+  $("tbColors").innerHTML = COLORS.map(c => `<button type="button" class="sw" data-color="${c}" style="background:${c}" title="${c}"></button>`).join("");
+  $("toolbar").addEventListener("mousedown", e => { if (e.target.closest("button")) e.preventDefault(); });  // 選択範囲を保つ
+
+  function putText(text, from, to) {            // 元に戻す(Ctrl+Z)が効くように入力する
+    ta.focus(); ta.setSelectionRange(from, to);
+    let ok = false; try { ok = document.execCommand("insertText", false, text); } catch (e) {}
+    if (!ok) ta.setRangeText(text, from, to, "end");
+    ta.dispatchEvent(new Event("input", { bubbles: true }));
+  }
+  function wrapInline(open, close, ph) {
+    const { s, e } = lastSel, sel = ta.value.slice(s, e) || ph;
+    putText(open + sel + close, s, e);
+    ta.setSelectionRange(s + open.length, s + open.length + sel.length); lastSel = { s: ta.selectionStart, e: ta.selectionEnd };
+  }
+  function wrapBlock(tag) {
+    const { s, e } = lastSel, sel = ta.value.slice(s, e) || "ここに文章";
+    const pre = s > 0 && ta.value[s - 1] !== "\n" ? "\n" : "";
+    const post = e < ta.value.length && ta.value[e] !== "\n" ? "\n" : "";
+    putText(`${pre}[${tag}]\n${sel}\n[/${tag}]${post}`, s, e);
+  }
+  function linePrefix(kindName) {
+    let { s, e } = lastSel;
+    const v = ta.value, a = v.lastIndexOf("\n", s - 1) + 1, bIdx = v.indexOf("\n", e), b = bIdx < 0 ? v.length : bIdx;
+    const lines = v.slice(a, b).split("\n");
+    const strip = l => l.replace(/^(#{1,3}\s+|>\s?|[-*]\s+|\d+[.)]\s+)/, "");
+    const out = lines.map((l, i) => {
+      const t = strip(l);
+      return kindName === "h2" ? "## " + t : kindName === "h3" ? "### " + t : kindName === "quote" ? "> " + t : kindName === "ul" ? "- " + t : `${i + 1}. ` + t;
+    }).join("\n");
+    putText(out, a, b);
+  }
+  function apply(fmt, arg) {
+    if (fmt === "b") wrapInline("**", "**", "太字");
+    else if (fmt === "i") wrapInline("*", "*", "斜体");
+    else if (fmt === "u") wrapInline("[u]", "[/u]", "下線");
+    else if (fmt === "s") wrapInline("[s]", "[/s]", "取り消し");
+    else if (fmt === "mark") wrapInline("[mark]", "[/mark]", "マーカー");
+    else if (fmt === "size") wrapInline(`[size=${arg}]`, "[/size]", "文字");
+    else if (fmt === "color") wrapInline(`[color=${arg}]`, "[/color]", "文字");
+    else if (["left", "center", "right"].includes(fmt)) wrapBlock(fmt);
+    else if (["h2", "h3", "quote", "ul", "ol"].includes(fmt)) linePrefix(fmt);
+    else if (fmt === "hr") { const { s, e } = lastSel; putText("\n---\n", s, e); }
+    else if (fmt === "link") {
+      const { s, e } = lastSel, sel = ta.value.slice(s, e) || "リンク文字";
+      putText(`[${sel}](https://)`, s, e);
+      const u = s + sel.length + 3; ta.setSelectionRange(u, u + 8); lastSel = { s: u, e: u + 8 };
+    }
+    else if (fmt === "code") {
+      const { s, e } = lastSel, sel = ta.value.slice(s, e) || "コード";
+      if (sel.includes("\n")) putText("```\n" + sel + "\n```", s, e); else wrapInline("`", "`", "コード");
+    }
+  }
+  $("toolbar").addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.color) apply("color", b.dataset.color);
+    else if (b.dataset.fmt) apply(b.dataset.fmt);
+  });
+  $("tbSize").onchange = e => { const v = e.target.value; e.target.value = ""; if (v) apply("size", v); };
+  $("tbColor").onchange = e => apply("color", e.target.value);
+  ta.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+    const k = e.key.toLowerCase();
+    if (k === "b" || k === "i" || k === "k") { e.preventDefault(); lastSel = { s: ta.selectionStart, e: ta.selectionEnd }; apply(k === "k" ? "link" : k); }
+  });
+
   function renderPreview() {
     let html = D.md($("body").value);
     for (const [rel, v] of Object.entries(pending)) html = html.split(`src="${rel}"`).join(`src="${v.url}"`);
