@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>投稿する | Study Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+<nav><div class="wrap">
+  <a href="./" class="logo">Study<span>Notes</span></a>
+  <div class="menu"><a href="diary/" class="hide">日記</a><a href="./#works" class="hide">成果物</a><button class="theme" id="theme" aria-label="テーマ切り替え">◐</button></div>
+</div></nav>
+
+<main class="page">
+  <div class="eyebrow">Write</div>
+  <h1>投稿する</h1>
+  <p class="sec-lead">日記やノートをブラウザで書いて、そのまま公開できます。スマホからもOKです。</p>
+
+  <!-- 初期設定 -->
+  <details class="panel" id="settings">
+    <summary>⚙ 初期設定(最初の1回だけ)</summary>
+    <div class="help">
+      GitHubに保存するための「合言葉(トークン)」を入れます。トークンはこの端末のブラウザにだけ保存され、サイトには公開されません。
+      <ol>
+        <li><a class="mini-link" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">トークン作成ページ</a> を開く</li>
+        <li>Token name は自由(例:study-site)、Expiration は好きな期間</li>
+        <li>Repository access は <b>Only select repositories</b> → このサイトのリポジトリだけ選ぶ</li>
+        <li>Permissions → Repository permissions → <b>Contents</b> を <b>Read and write</b> にする</li>
+        <li><b>Generate token</b> を押して、表示された文字列をコピーし、下に貼る</li>
+      </ol>
+      ※トークンは他人に見せないでください。共有パソコンでは使わないでください。
+    </div>
+    <div class="row">
+      <label class="field"><span>GitHubのユーザー名</span><input id="cfgOwner" autocomplete="off"></label>
+      <label class="field"><span>リポジトリ名</span><input id="cfgRepo" autocomplete="off"></label>
+    </div>
+    <label class="field"><span>トークン</span><input id="cfgToken" type="password" autocomplete="off" placeholder="github_pat_..."></label>
+    <label class="field"><span>ブランチ(空欄でOK)</span><input id="cfgBranch" autocomplete="off" placeholder="main"></label>
+    <div class="bar">
+      <button class="btn p sm" id="cfgSave">保存して接続テスト</button>
+      <button class="btn sm" id="cfgClear">設定を消す</button>
+    </div>
+  </details>
+
+  <div class="tabs" id="tabs">
+    <button class="chip on" data-kind="diary">日記</button>
+    <button class="chip" data-kind="note">ノート</button>
+  </div>
+
+  <div class="panel">
+    <div id="editingBar" class="help" style="display:none;margin-top:0"></div>
+    <label class="field"><span>タイトル</span><input id="title" placeholder="タイトル"></label>
+    <div id="noteFields">
+      <div class="row">
+        <label class="field"><span>ジャンル(絞り込みボタンになります)</span>
+          <input id="type" list="typeList" value="ノート"><datalist id="typeList"><option>ノート</option><option>資料</option><option>作品</option><option>読書</option></datalist></label>
+        <label class="field"><span>かけた時間(時間・任意)</span><input id="hours" type="number" min="0" step="0.5" placeholder="例: 2"></label>
+      </div>
+      <label class="field"><span>一言説明(一覧に表示されます)</span><input id="desc" placeholder="どんな内容か一言で"></label>
+    </div>
+    <label class="field"><span>本文</span><textarea id="body" placeholder="ここに書きます。"></textarea></label>
+
+    <div class="bar">
+      <button class="btn sm" id="addImg">🖼 画像を追加</button>
+      <input type="file" id="imgInput" accept="image/*" multiple hidden>
+      <button class="btn sm" id="togglePrev">プレビュー</button>
+      <span class="help" style="margin:0" id="imgInfo"></span>
+    </div>
+    <div class="preview" id="preview"></div>
+    <div class="help">
+      書き方: <code>## 見出し</code> / <code>**太字**</code> / <code>- リスト</code> / <code>&gt; 引用</code> / <code>[文字](URL)</code> / コードは <code>```</code> で囲む。画像はボタンで追加すると本文に入ります。
+    </div>
+
+    <div class="bar">
+      <button class="btn p sm" id="submit">投稿する</button>
+      <button class="btn sm" id="reset">新規にもどす</button>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="panel">
+    <b id="listTitle">これまでの投稿</b>
+    <div id="postList" style="margin-top:8px"><span class="help">設定すると表示されます。</span></div>
+  </div>
+</main>
+
+<script src="assets/diary.js"></script>
+<script src="assets/common.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const KINDS = { diary: { dir: "diary", label: "日記" }, note: { dir: "notes", label: "ノート" } };
+  let kind = "diary";
+  let cfg = {};
+  let editing = null;      // { id, sha, date } 編集中の投稿
+  let draftId = newId();   // 新規投稿のID
+  let pending = {};        // { "img/xxx.jpg": { b64, url } } 未アップロードの画像
+  let imgCount = 0;
+
+  /* ---------- 便利関数 ---------- */
+  function newId() {
+    const d = new Date(), p = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`;
+  }
+  const enc = str => { const b = new TextEncoder().encode(str); let s = ""; b.forEach(c => s += String.fromCharCode(c)); return btoa(s); };
+  const dec = b64 => { const s = atob(b64.replace(/\n/g, "")); return new TextDecoder().decode(Uint8Array.from(s, c => c.charCodeAt(0))); };
+  function status(msg, type) { const el = $("status"); el.textContent = msg; el.className = "status show " + (type || "info"); }
+  const save = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+  const load = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+
+  /* ---------- 設定 ---------- */
+  function guess() {
+    const m = location.hostname.match(/^(.+)\.github\.io$/);
+    if (!m) return {};
+    const segs = location.pathname.split("/").filter(Boolean);
+    return { owner: m[1], repo: segs.length > 1 ? segs[0] : m[1] + ".github.io" };
+  }
+  try { cfg = JSON.parse(load("ghcfg") || "{}"); } catch (e) { cfg = {}; }
+  const g = guess();
+  $("cfgOwner").value = cfg.owner || g.owner || "";
+  $("cfgRepo").value = cfg.repo || g.repo || "";
+  $("cfgToken").value = cfg.token || "";
+  $("cfgBranch").value = cfg.branch || "";
+  if (!cfg.token) $("settings").open = true;
+
+  function readCfg() {
+    cfg = { owner: $("cfgOwner").value.trim(), repo: $("cfgRepo").value.trim(), token: $("cfgToken").value.trim(), branch: $("cfgBranch").value.trim() };
+  }
+
+  /* ---------- GitHub API ---------- */
+  async function api(method, path, body) {
+    if (!cfg.token || !cfg.owner || !cfg.repo) throw new Error("初期設定(ユーザー名・リポジトリ名・トークン)を入力してください。");
+    let url = `https://api.github.com/repos/${cfg.owner}/${cfg.repo}/contents/${path}`;
+    if (method === "GET") url += `?t=${Date.now()}` + (cfg.branch ? `&ref=${encodeURIComponent(cfg.branch)}` : "");
+    if (body && cfg.branch) body.branch = cfg.branch;
+    const r = await fetch(url, {
+      method, cache: "no-store",
+      headers: { Authorization: "Bearer " + cfg.token, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined
+    });
+    if (r.status === 404 && method === "GET") return null;
+    if (!r.ok) {
+      let m = ""; try { m = (await r.json()).message; } catch (e) {}
+      const e = new Error(r.status === 401 ? "トークンが正しくないか、期限切れです。" :
+        r.status === 403 || (r.status === 404 && method !== "GET") ? "権限がありません。トークンの Contents が Read and write か、対象リポジトリが合っているか確認してください。" :
+        `GitHubエラー(${r.status}) ${m}`);
+      e.status = r.status; throw e;
+    }
+    return r.json();
+  }
+  const getFile = async path => { const j = await api("GET", path); return j ? { sha: j.sha, text: dec(j.content) } : null; };
+  const putFile = (path, b64, msg, sha) => api("PUT", path, { message: msg, content: b64, ...(sha ? { sha } : {}) });
+
+  async function updateIndex(dir, fn) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        const f = await getFile(`${dir}/index.json`);
+        let data = { posts: [] }; try { if (f) data = JSON.parse(f.text); } catch (e) {}
+        data.posts = fn(data.posts || []).sort((a, b) => b.date.localeCompare(a.date));
+        await putFile(`${dir}/index.json`, enc(JSON.stringify(data, null, 2) + "\n"), "Update index", f && f.sha);
+        return;
+      } catch (e) { if (i === 2 || (e.status !== 409 && e.status !== 422)) throw e; }
+    }
+  }
+
+  /* ---------- 画面の切り替え ---------- */
+  function setKind(k) {
+    kind = k;
+    document.querySelectorAll("#tabs .chip").forEach(c => c.classList.toggle("on", c.dataset.kind === k));
+    $("noteFields").style.display = k === "note" ? "" : "none";
+    $("title").placeholder = k === "diary" ? "例:今日の勉強メモ" : "ノートのタイトル";
+    $("listTitle").textContent = `これまでの${KINDS[k].label}`;
+    resetForm(); refreshList();
+  }
+  document.querySelectorAll("#tabs .chip").forEach(c => c.onclick = () => setKind(c.dataset.kind));
+
+  function resetForm() {
+    editing = null; draftId = newId(); pending = {}; imgCount = 0;
+    $("title").value = ""; $("body").value = ""; $("desc").value = ""; $("hours").value = ""; $("type").value = "ノート";
+    $("editingBar").style.display = "none"; $("preview").classList.remove("show"); $("imgInfo").textContent = "";
+    $("submit").textContent = "投稿する";
+    const d = load("draft_" + kind);
+    if (d) { try { const o = JSON.parse(d); $("title").value = o.title || ""; $("body").value = o.body || ""; $("desc").value = o.desc || ""; if (o.type) $("type").value = o.type; } catch (e) {} }
+  }
+  function saveDraft() {
+    if (editing) return;
+    save("draft_" + kind, JSON.stringify({ title: $("title").value, body: $("body").value, desc: $("desc").value, type: $("type").value }));
+  }
+  ["title", "body", "desc", "type"].forEach(id => $(id).addEventListener("input", saveDraft));
+  $("reset").onclick = () => { try { localStorage.removeItem("draft_" + kind); } catch (e) {} setKind(kind); status("", ""); $("status").className = "status"; };
+
+  /* ---------- 画像 ---------- */
+  $("addImg").onclick = () => $("imgInput").click();
+  function toJpeg(file) {
+    return new Promise((res, rej) => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => {
+        const max = 1400, k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+        const url = c.toDataURL("image/jpeg", 0.82); URL.revokeObjectURL(u);
+        res({ b64: url.split(",")[1], url });
+      };
+      img.onerror = () => rej(new Error("画像を読み込めませんでした: " + file.name));
+      img.src = u;
+    });
+  }
+  $("imgInput").onchange = async e => {
+    for (const f of e.target.files) {
+      try {
+        const r = await toJpeg(f);
+        const rel = `img/${draftId}-${++imgCount}.jpg`;
+        pending[rel] = r;
+        const ta = $("body"), pos = ta.selectionStart ?? ta.value.length;
+        const ins = `${pos && ta.value[pos - 1] !== "\n" ? "\n" : ""}![](${rel})\n`;
+        ta.value = ta.value.slice(0, pos) + ins + ta.value.slice(pos);
+        ta.selectionStart = ta.selectionEnd = pos + ins.length;
+      } catch (err) { status(err.message, "err"); }
+    }
+    e.target.value = "";
+    $("imgInfo").textContent = Object.keys(pending).length ? `追加した画像: ${Object.keys(pending).length}枚(投稿時に保存されます)` : "";
+    saveDraft(); if ($("preview").classList.contains("show")) renderPreview();
+  };
+
+  /* ---------- プレビュー ---------- */
+  function renderPreview() {
+    let html = D.md($("body").value);
+    for (const [rel, v] of Object.entries(pending)) html = html.split(`src="${rel}"`).join(`src="${v.url}"`);
+    $("preview").innerHTML = html || '<p class="help">本文がまだありません。</p>';
+  }
+  $("togglePrev").onclick = () => { const p = $("preview"); p.classList.toggle("show"); if (p.classList.contains("show")) renderPreview(); };
+  $("body").addEventListener("input", () => { if ($("preview").classList.contains("show")) renderPreview(); });
+
+  /* ---------- 投稿 ---------- */
+  $("submit").onclick = async () => {
+    const title = $("title").value.trim(), body = $("body").value;
+    if (!title) return status("タイトルを入力してください。", "err");
+    if (!body.trim()) return status("本文を入力してください。", "err");
+    const dir = KINDS[kind].dir, id = editing ? editing.id : draftId;
+    const date = editing ? editing.date : new Date().toISOString();
+    const btn = $("submit"); btn.disabled = true;
+    try {
+      // 1) 本文で使っている画像だけアップロード
+      const used = Object.keys(pending).filter(rel => body.includes(`(${rel})`));
+      for (let i = 0; i < used.length; i++) {
+        status(`画像をアップロード中… (${i + 1}/${used.length})`, "info");
+        const path = `${dir}/${used[i]}`;
+        const ex = await getFile(path).catch(() => null);
+        await putFile(path, pending[used[i]].b64, "Add image", ex && ex.sha);
+      }
+      // 2) 投稿本体
+      status("投稿を保存中…", "info");
+      const post = { id, title, date, body };
+      if (editing) post.updated = new Date().toISOString();
+      const meta = { id, title, date };
+      if (kind === "diary") meta.excerpt = D.excerpt(body);
+      else {
+        post.type = $("type").value.trim() || "ノート"; post.desc = $("desc").value.trim();
+        const h = parseFloat($("hours").value); if (h > 0) post.hours = h;
+        Object.assign(meta, { type: post.type, desc: post.desc }); if (post.hours) meta.hours = post.hours;
+      }
+      const ppath = `${dir}/posts/${id}.json`;
+      const ex = editing ? { sha: editing.sha } : await getFile(ppath);
+      await putFile(ppath, enc(JSON.stringify(post, null, 2) + "\n"), `${editing ? "Edit" : "Add"} ${kind}: ${title}`, ex && ex.sha);
+      // 3) 一覧(index.json)を更新
+      status("一覧を更新中…", "info");
+      await updateIndex(dir, ps => [...ps.filter(p => p.id !== id), meta]);
+      const url = kind === "diary" ? `diary/post.html?id=${id}` : `notes/view.html?id=${id}`;
+      try { localStorage.removeItem("draft_" + kind); } catch (e) {}
+      $("status").innerHTML = `✔ 投稿しました。公開ページへの反映まで1〜2分かかります。 <a class="mini-link" href="${url}" target="_blank" rel="noopener">開いて確認 →</a>`;
+      $("status").className = "status show ok";
+      editing = null; draftId = newId(); pending = {}; imgCount = 0;
+      $("title").value = ""; $("body").value = ""; $("desc").value = ""; $("hours").value = ""; $("imgInfo").textContent = "";
+      $("editingBar").style.display = "none"; $("preview").classList.remove("show"); btn.textContent = "投稿する";
+      refreshList();
+    } catch (e) { status("失敗しました: " + e.message, "err"); }
+    btn.disabled = false;
+  };
+
+  /* ---------- 過去の投稿: 編集・削除 ---------- */
+  async function refreshList() {
+    const box = $("postList");
+    if (!cfg.token) { box.innerHTML = '<span class="help">設定すると表示されます。</span>'; return; }
+    box.innerHTML = '<span class="help">読み込み中…</span>';
+    try {
+      const dir = KINDS[kind].dir, f = await getFile(`${dir}/index.json`);
+      const posts = f ? (JSON.parse(f.text).posts || []) : [];
+      if (!posts.length) { box.innerHTML = '<span class="help">まだありません。</span>'; return; }
+      const view = id => kind === "diary" ? `diary/post.html?id=${id}` : `notes/view.html?id=${id}`;
+      box.innerHTML = posts.map(p => `<div class="postrow"><div class="t"><b>${D.esc(p.title)}</b><small>${D.fmtDate(p.date)}</small></div>
+        <div class="acts"><a href="${view(encodeURIComponent(p.id))}" target="_blank" rel="noopener">表示</a>
+        <button data-edit="${D.esc(p.id)}">編集</button><button class="del" data-del="${D.esc(p.id)}">削除</button></div></div>`).join("");
+      box.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => editPost(b.dataset.edit));
+      box.querySelectorAll("[data-del]").forEach(b => b.onclick = () => delPost(b.dataset.del));
+    } catch (e) { box.innerHTML = `<span class="help">読み込めませんでした: ${D.esc(e.message)}</span>`; }
+  }
+  async function editPost(id) {
+    try {
+      status("読み込み中…", "info");
+      const f = await getFile(`${KINDS[kind].dir}/posts/${id}.json`);
+      if (!f) return status("投稿が見つかりません。", "err");
+      const p = JSON.parse(f.text);
+      editing = { id, sha: f.sha, date: p.date }; pending = {};
+      $("title").value = p.title; $("body").value = p.body;
+      if (kind === "note") { $("type").value = p.type || "ノート"; $("desc").value = p.desc || ""; $("hours").value = p.hours || ""; }
+      $("editingBar").innerHTML = `✎ 「${D.esc(p.title)}」を編集中です。`; $("editingBar").style.display = "block";
+      $("submit").textContent = "更新する"; $("status").className = "status";
+      window.scrollTo({ top: $("title").getBoundingClientRect().top + scrollY - 140, behavior: "smooth" });
+    } catch (e) { status("失敗しました: " + e.message, "err"); }
+  }
+  async function delPost(id) {
+    if (!confirm("この投稿を削除します。よろしいですか?")) return;
+    try {
+      status("削除中…", "info");
+      const dir = KINDS[kind].dir, path = `${dir}/posts/${id}.json`, f = await getFile(path);
+      if (f) await api("DELETE", path, { message: "Delete " + id, sha: f.sha });
+      await updateIndex(dir, ps => ps.filter(p => p.id !== id));
+      status("削除しました。公開ページへの反映まで1〜2分かかります。", "ok");
+      refreshList();
+    } catch (e) { status("失敗しました: " + e.message, "err"); }
+  }
+
+  /* ---------- 設定ボタン ---------- */
+  $("cfgSave").onclick = async () => {
+    readCfg(); save("ghcfg", JSON.stringify(cfg));
+    try {
+      status("接続を確認中…", "info");
+      const r = await fetch(`https://api.github.com/repos/${cfg.owner}/${cfg.repo}`, { headers: { Authorization: "Bearer " + cfg.token } });
+      if (!r.ok) throw new Error(r.status === 401 ? "トークンが正しくないか、期限切れです。" : r.status === 404 ? "リポジトリが見つかりません(名前を確認してください)。" : "接続に失敗しました(" + r.status + ")");
+      const j = await r.json();
+      if (j.permissions && !j.permissions.push) throw new Error("書き込み権限がありません。トークンの Contents を Read and write にしてください。");
+      status("✔ 接続できました。投稿できます。", "ok"); $("settings").open = false; refreshList();
+    } catch (e) { status(e.message, "err"); }
+  };
+  $("cfgClear").onclick = () => { try { localStorage.removeItem("ghcfg"); } catch (e) {} cfg = {}; $("cfgToken").value = ""; status("設定を消しました。", "info"); refreshList(); };
+
+  setKind("diary");
+})();
+</script>
+</body>
+</html>
