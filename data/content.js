@@ -41,17 +41,7 @@ const SITE = {
      links: [["表示名","URL"]]  → 自由なリンク
    ---------------------------------------------------------- */
 const ITEMS = [
-  { title: "JavaScript入門メモ", type: "ノート", date: "2026.09",
-    desc: "変数・関数・配列の基本を、自分の言葉でまとめたメモ。",
-    note: "js-basics" },
-
-  { title: "英語表現まとめ", type: "資料", date: "2026.08",
-    desc: "覚えた表現と勉強法をPDFにまとめました。(サンプル:このPDFは未配置です)",
-    file: "english/expressions.pdf" },
-
-  { title: "学習管理ツール", type: "作品", date: "2026.07",
-    desc: "勉強の過程で作った小さなプログラム。(サンプル)",
-    repo: "https://github.com/" }
+  
 ];
 
 const JOURNEY = [
