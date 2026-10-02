@@ -263,3 +263,14 @@ body.authed .tabs.gated { display: flex; }
 .toolbar .sep { width: 1px; height: 22px; background: var(--line); margin: 0 4px; }
 .toolbar .sw { width: 22px; height: 22px; min-width: 22px; padding: 0; border-radius: 50%; }
 .toolbar input[type=color] { width: 30px; height: 28px; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; cursor: pointer; }
+
+/* ---------- 行間 ---------- */
+.article, .preview { line-height: 1.95; }
+.article p, .preview p { margin: 1.1em 0; }
+.article .gap, .preview .gap { height: 1.4em; }
+.article.lh-wide, .preview.lh-wide { line-height: 2.25; }
+.article.lh-wide p, .preview.lh-wide p { margin: 1.4em 0; }
+.article.lh-xwide, .preview.lh-xwide { line-height: 2.7; }
+.article.lh-xwide p, .preview.lh-xwide p { margin: 1.8em 0; }
+.article.lh-tight, .preview.lh-tight { line-height: 1.7; }
+.article.lh-tight p, .preview.lh-tight p { margin: .9em 0; }

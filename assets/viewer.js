@@ -13,7 +13,7 @@
       <div class="meta" style="justify-content:flex-start;gap:12px">${tag}<span>${D.fmtDate(p.date, true)}</span></div>
       <h1>${D.esc(p.title)}</h1>
       ${p.desc ? `<p class="sec-lead">${D.esc(p.desc)}</p>` : ""}
-      <div class="article">${D.md(p.body)}</div>`;
+      <div class="article ${/^[a-z]+$/.test(p.spacing || "") ? "lh-" + p.spacing : ""}">${D.md(p.body)}</div>`;
   } catch (e) {
     app.innerHTML = '<p class="sec-lead">見つかりませんでした。投稿直後は、反映まで1〜2分かかることがあります。</p>';
   }

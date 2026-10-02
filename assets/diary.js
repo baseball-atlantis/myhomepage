@@ -37,7 +37,7 @@ const D = (() => {
      行だけの [left] [center] [right] ... [/right] で、間の段落をまとめて寄せる */
   function md(src) {
     const lines = esc(src || "").replace(/\r/g, "").split("\n");
-    let out = "", para = [], list = "", code = false, buf = [], depth = 0;
+    let out = "", para = [], list = "", code = false, buf = [], depth = 0, blank = 0;
     const flushP = () => { if (para.length) { out += "<p>" + inline(para.join("<br>")) + "</p>"; para = []; } };
     const closeL = () => { if (list) { out += `</${list}>`; list = ""; } };
     const openL = tag => { if (list !== tag) { closeL(); out += `<${tag}>`; list = tag; } };
@@ -49,12 +49,13 @@ const D = (() => {
       }
       if (code) { buf.push(ln); continue; }
       let m;
+      if (ln.trim()) blank = 0;
       if ((m = ln.trim().match(/^\[(\/?)(left|center|right)\]$/))) {
         flushP(); closeL();
         if (m[1]) { if (depth > 0) { out += "</div>"; depth--; } }
         else { out += `<div class="al-${m[2]}">`; depth++; }
       }
-      else if (!ln.trim()) { flushP(); closeL(); }
+      else if (!ln.trim()) { flushP(); closeL(); if (++blank > 1 && out) out += '<div class="gap"></div>'; }
       else if (/^(-{3,}|\*{3,})\s*$/.test(ln)) { flushP(); closeL(); out += "<hr>"; }
       else if ((m = ln.match(/^(#{1,3})\s+(.*)$/))) { flushP(); closeL(); const n = m[1].length + 1; out += `<h${n}>${inline(m[2])}</h${n}>`; }
       else if ((m = ln.match(/^[-*]\s+(.*)$/))) { flushP(); openL("ul"); out += "<li>" + inline(m[1]) + "</li>"; }
@@ -65,7 +66,7 @@ const D = (() => {
     if (code) out += "<pre><code>" + buf.join("\n") + "</code></pre>";
     flushP(); closeL();
     while (depth-- > 0) out += "</div>";
-    return out;
+    return out.replace(/(<div class="gap"><\/div>)+$/, "");
   }
   const excerpt = (body, n = 90) => String(body || "")
     .replace(/!\[[^\]]*\]\([^)]*\)(\{w=\d+\})?/g, "")
