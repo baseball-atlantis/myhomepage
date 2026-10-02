@@ -33,8 +33,7 @@
     box.className = "modal";
     box.innerHTML = `<div class="modal-card" role="dialog" aria-label="本人確認">
       <h3>投稿の本人確認</h3>
-      <p class="help">GitHubのトークンで確認します。トークンを持っている本人だけが投稿画面に進めます。<br>
-        トークンの作り方は <a class="mini-link" href="write.html">投稿画面</a> に書いてあります。</p>
+      <p class="help">GitHubのトークンで確認します。トークンを持っている本人だけが投稿画面に進めます。</p>
       <label class="field"><span>トークン</span><input id="aToken" type="password" autocomplete="off" placeholder="github_pat_..."></label>
       <details><summary class="help" style="cursor:pointer">ユーザー名・リポジトリ名を変更</summary>
         <div class="row">
