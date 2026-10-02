@@ -41,17 +41,7 @@ const SITE = {
      hours: 10                → かけた時間(任意。合計が学習時間に出る)
    ---------------------------------------------------------- */
 const ITEMS = [
-  { title: "JavaScript入門メモ", type: "ノート", date: "2026.09",
-    desc: "変数・関数・配列の基本を、自分の言葉でまとめたメモ。",
-    note: "js-basics", hours: 8 },
-
-  { title: "英語表現まとめ", type: "資料", date: "2026.08",
-    desc: "覚えた表現と勉強法をPDFにまとめました。(サンプル:このPDFは未配置です)",
-    file: "english/expressions.pdf", hours: 15 },
-
-  { title: "学習管理ツール", type: "作品", date: "2026.07",
-    desc: "勉強の過程で作った小さなプログラム。(サンプル)",
-    repo: "https://github.com/", hours: 20 }
+  
 ];
 
 const JOURNEY = [
