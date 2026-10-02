@@ -67,7 +67,7 @@ h1 .g { background: var(--grad); -webkit-background-clip: text; background-clip:
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-top: 70px; }
 .stat { padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--card); backdrop-filter: blur(8px); }
 .stat b { display: block; font-size: 2rem; letter-spacing: -.02em; }
-.stat span { color: var(--sub); font-size: .85rem; }
+.stat .lbl { color: var(--sub); font-size: .85rem; }
 
 /* sections */
 section { padding: 90px 0; }

@@ -7,12 +7,17 @@ const SITE = {
   title: ["学んだことを、", "形にして残す。"],   // 2行目がカラフルに表示されます
   lead: "プログラミングから語学まで、いろいろ勉強した成果をここにまとめています。気になるものがあれば、自由に見ていってください。",
   owner: "あなたの名前",
-  // auto を書いた項目は自動で数えます。手で決めたい項目は n: 数字 と書きます
+  // 数字は自動で数えられます(auto の書き方)
+  //   auto: "items"       → 成果物の件数
+  //   auto: "types"       → ジャンル(type)の種類数
+  //   auto: "hours"       → 各成果物の hours を合計
+  //   auto: "type:ノート" → type が「ノート」の件数
+  //   n: 12               → 自分で数字を決める(手動)
   stats: [
-    { auto: "items", suffix: "件",   label: "成果物" },   // 成果物の数は自動
-    { auto: "types", suffix: "種類", label: "ジャンル" },   // 種類(type)の数は自動
-    { n: 120, suffix: "h+",   label: "学習時間" },
-    { n: 3,   suffix: "冊",   label: "読んだ本" }
+    { auto: "items",     suffix: "件",   label: "成果物" },
+    { auto: "types",     suffix: "種類", label: "ジャンル" },
+    { auto: "hours",     suffix: "h",    label: "学習時間" },
+    { auto: "type:ノート", suffix: "本", label: "ノート" }
   ],
   aboutTitle: "コツコツ学ぶ、が好きです。",
   about: [
@@ -33,19 +38,20 @@ const SITE = {
      file: "english/words.pdf" → files/english/words.pdf の資料
      repo: "https://github.com/..." → GitHubなどの外部リンク
      links: [["表示名","URL"]]  → 自由なリンク
+     hours: 10                → かけた時間(任意。合計が学習時間に出る)
    ---------------------------------------------------------- */
 const ITEMS = [
   { title: "JavaScript入門メモ", type: "ノート", date: "2026.09",
     desc: "変数・関数・配列の基本を、自分の言葉でまとめたメモ。",
-    note: "js-basics" },
+    note: "js-basics", hours: 8 },
 
   { title: "英語表現まとめ", type: "資料", date: "2026.08",
     desc: "覚えた表現と勉強法をPDFにまとめました。(サンプル:このPDFは未配置です)",
-    file: "english/expressions.pdf" },
+    file: "english/expressions.pdf", hours: 15 },
 
   { title: "学習管理ツール", type: "作品", date: "2026.07",
     desc: "勉強の過程で作った小さなプログラム。(サンプル)",
-    repo: "https://github.com/" }
+    repo: "https://github.com/", hours: 20 }
 ];
 
 const JOURNEY = [
