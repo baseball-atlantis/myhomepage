@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Notes | 学びの記録</title>
+<meta name="description" content="勉強の成果をまとめたホームページ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#top" class="logo">Study<span>Notes</span></a>
+    <div class="menu">
+      <a href="#works" class="hide">成果物</a>
+      <a href="#about" class="hide">About</a>
+      <a href="#journey" class="hide">歩み</a>
+      <a href="#contact">連絡</a>
+      <button class="theme" id="theme" aria-label="テーマ切り替え">◐</button>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+  <div class="wrap">
+    <span class="pill"><i class="dot"></i><span id="pill"></span></span>
+    <h1 id="h1"></h1>
+    <p class="lead" id="lead"></p>
+    <div class="btns">
+      <a class="btn p" href="#works">成果物を見る</a>
+      <a class="btn" href="#about">自己紹介</a>
+    </div>
+    <div class="stats" id="stats"></div>
+  </div>
+</header>
+
+<section id="works">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Works</div>
+      <h2>学びの成果物</h2>
+      <p class="sec-lead">ノート、資料、作ったものを分野ごとにまとめています。</p>
+    </div>
+    <div class="tools rv">
+      <input class="search" id="q" type="search" placeholder="キーワードで探す">
+      <div class="chips" id="chips"></div>
+    </div>
+    <div class="grid" id="list"></div>
+  </div>
+</section>
+
+<section id="about">
+  <div class="wrap about">
+    <div class="rv">
+      <div class="eyebrow">About</div>
+      <h2 id="aboutTitle"></h2>
+      <div id="aboutText"></div>
+    </div>
+    <div class="rv">
+      <div class="eyebrow" style="margin-bottom:14px">Topics</div>
+      <div class="skills" id="skills"></div>
+    </div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="rv">
+      <div class="eyebrow">Journey</div>
+      <h2>学習の歩み</h2>
+      <p class="sec-lead">これまでの取り組みを時系列で振り返ります。</p>
+    </div>
+    <div class="tl rv" id="tl"></div>
+  </div>
+</section>
+
+<section id="contact">
+  <div class="wrap">
+    <div class="cta rv">
+      <div class="eyebrow">Contact</div>
+      <h2>感想・質問はお気軽に</h2>
+      <p id="ctaText"></p>
+      <a class="btn p" id="ctaBtn" href="#">連絡する</a>
+    </div>
+  </div>
+</section>
+
+<footer>© <span id="y"></span> <span id="owner"></span></footer>
+
+<script src="data/content.js"></script>
+<script src="assets/main.js"></script>
+<script src="assets/common.js"></script>
+</body>
+</html>

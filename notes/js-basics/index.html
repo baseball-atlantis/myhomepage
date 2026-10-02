@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JavaScript入門メモ | Study Notes</title>
+<meta name="description" content="変数・関数・配列の基本を、自分の言葉でまとめたメモ。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../assets/style.css">
+</head>
+<body>
+<nav>
+  <div class="wrap">
+    <a href="../../" class="logo">Study<span>Notes</span></a>
+    <div class="menu"><button class="theme" id="theme" aria-label="テーマ切り替え">◐</button></div>
+  </div>
+</nav>
+
+<main class="note">
+  <a class="back" href="../../#works">← 一覧に戻る</a>
+  <div class="meta"><span class="tag">ノート</span><span>2026.09</span></div>
+  <h1>JavaScript入門メモ</h1>
+  <p class="summary">変数・関数・配列の基本を、自分の言葉でまとめたメモ。(これはサンプルのノートです)</p>
+
+  <!-- ここから本文 -->
+  <h2>変数</h2>
+  <p>値に名前を付けて持っておく入れ物。<code>let</code> は後から変更できて、<code>const</code> は変更できません。</p>
+  <pre><code>const name = "太郎";
+let count = 0;
+count = count + 1;</code></pre>
+
+  <h2>関数</h2>
+  <p>処理をひとまとめにして、名前を付けたもの。何度でも呼び出せます。</p>
+  <pre><code>function greet(name) {
+  return "こんにちは、" + name + "さん";
+}
+greet("太郎");</code></pre>
+
+  <h2>配列</h2>
+  <ul>
+    <li>複数の値を順番に並べて持てる</li>
+    <li>番号(インデックス)は <strong>0から</strong> 始まる</li>
+    <li><code>push</code> で末尾に追加できる</li>
+  </ul>
+
+  <blockquote>ポイント:最初は全部覚えようとせず、手を動かして慣れるのが近道。</blockquote>
+  <!-- ここまで本文 -->
+</main>
+
+<footer><a href="../../#works" style="color:var(--a2)">← 他の成果物を見る</a></footer>
+<script src="../../assets/common.js"></script>
+</body>
+</html>
